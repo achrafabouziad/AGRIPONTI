@@ -11,10 +11,10 @@ app.use(express.json());
 
 // ── Price Indices (B2C) ────────────────────────────────────────
 
-app.get('/api/prices', (req, res) => {
+app.get('/api/prices', async (req, res) => {
   try {
-    const prices = db.prepare('SELECT * FROM prices ORDER BY name').all();
-    const formatted = prices.map(p => ({
+    const prices = await db.query('SELECT * FROM prices ORDER BY name');
+    const formatted = prices.rows.map(p => ({
       id: p.id,
       name: p.name,
       unit: p.unit,
@@ -33,25 +33,25 @@ app.get('/api/prices', (req, res) => {
 
 // ── B2B Listings ───────────────────────────────────────────────
 
-app.get('/api/b2b', (req, res) => {
+app.get('/api/b2b', async (req, res) => {
   try {
     const { region, product } = req.query;
     let query = 'SELECT * FROM b2b_listings WHERE 1=1';
     const params = [];
 
     if (region) {
-      query += ' AND region LIKE ?';
       params.push(`%${region}%`);
+      query += ` AND region LIKE $${params.length}`;
     }
     if (product) {
-      query += ' AND product LIKE ?';
       params.push(`%${product}%`);
+      query += ` AND product LIKE $${params.length}`;
     }
 
     query += ' ORDER BY created_at DESC';
-    const listings = db.prepare(query).all(...params);
+    const listings = await db.query(query, params);
 
-    const formatted = listings.map(l => ({
+    const formatted = listings.rows.map(l => ({
       id: l.id,
       farmer: l.farmer,
       region: l.region,
@@ -71,7 +71,7 @@ app.get('/api/b2b', (req, res) => {
   }
 });
 
-app.post('/api/b2b', (req, res) => {
+app.post('/api/b2b', async (req, res) => {
   try {
     const { farmer, region, product, variety, quantity, unit, pricePerKg, dateLabel, transportIncluded } = req.body;
 
@@ -79,12 +79,13 @@ app.post('/api/b2b', (req, res) => {
       return res.status(400).json({ error: 'Champs requis manquants' });
     }
 
-    const result = db.prepare(`
+    const result = await db.query(`
       INSERT INTO b2b_listings (farmer, region, product, variety, quantity, unit, price_per_kg, date_label, transport_included)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(farmer, region, product, variety || null, quantity, unit || 'Tonnes', pricePerKg, dateLabel || "Aujourd'hui", transportIncluded ? 1 : 0);
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id
+    `, [farmer, region, product, variety || null, quantity, unit || 'Tonnes', pricePerKg, dateLabel || "Aujourd'hui", transportIncluded ? 1 : 0]);
 
-    res.status(201).json({ id: result.lastInsertRowid, message: 'Offre publiée avec succès' });
+    res.status(201).json({ id: result.rows[0].id, message: 'Offre publiée avec succès' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -92,10 +93,10 @@ app.post('/api/b2b', (req, res) => {
 
 // ── Trusted Shops ──────────────────────────────────────────────
 
-app.get('/api/shops', (req, res) => {
+app.get('/api/shops', async (req, res) => {
   try {
-    const shops = db.prepare('SELECT * FROM trusted_shops ORDER BY respect_index DESC').all();
-    const formatted = shops.map(s => ({
+    const shops = await db.query('SELECT * FROM trusted_shops ORDER BY respect_index DESC');
+    const formatted = shops.rows.map(s => ({
       id: s.id,
       name: s.name,
       type: s.type,
@@ -112,7 +113,7 @@ app.get('/api/shops', (req, res) => {
 
 // ── Reports ────────────────────────────────────────────────────
 
-app.post('/api/report', (req, res) => {
+app.post('/api/report', async (req, res) => {
   try {
     const { shopName, product, reportedPrice, description } = req.body;
 
@@ -120,12 +121,13 @@ app.post('/api/report', (req, res) => {
       return res.status(400).json({ error: 'Champs requis manquants' });
     }
 
-    const result = db.prepare(`
+    const result = await db.query(`
       INSERT INTO reports (shop_name, product, reported_price, description)
-      VALUES (?, ?, ?, ?)
-    `).run(shopName, product, reportedPrice || null, description || null);
+      VALUES ($1, $2, $3, $4)
+      RETURNING id
+    `, [shopName, product, reportedPrice || null, description || null]);
 
-    res.status(201).json({ id: result.lastInsertRowid, message: 'Signalement enregistré. Merci !' });
+    res.status(201).json({ id: result.rows[0].id, message: 'Signalement enregistré. Merci !' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
