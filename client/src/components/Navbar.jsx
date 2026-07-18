@@ -24,7 +24,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             <LeafIcon />
           </div>
           <div>
-            <span className="navbar-title">Wassit</span>
+            <span className="navbar-title">AGRIPONTI</span>
             <span className="navbar-subtitle">Bernoussi</span>
           </div>
         </div>

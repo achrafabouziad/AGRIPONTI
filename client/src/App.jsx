@@ -6,7 +6,7 @@ import ShopCard from './components/ShopCard';
 import B2BTable from './components/B2BTable';
 import ReportModal from './components/ReportModal';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://agriponti.onrender.com' : 'http://localhost:3001');
 
 const ChartIcon = () => (
   <svg className="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

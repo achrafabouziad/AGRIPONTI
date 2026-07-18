@@ -1,7 +1,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
-const db = new DatabaseSync(path.join(__dirname, 'wassit.db'));
+const db = new DatabaseSync(path.join(__dirname, 'agriponti.db'));
 
 // ── Create Tables ──────────────────────────────────────────────
 

@@ -140,7 +140,7 @@ app.get('/api/health', (req, res) => {
 // ── Start Server ───────────────────────────────────────────────
 
 app.listen(PORT, () => {
-  console.log(`\n  🌱 Wassit API running on http://localhost:${PORT}`);
+  console.log(`\n  🌱 AGRIPONTI API running on http://localhost:${PORT}`);
   console.log(`  📊 Prices:  http://localhost:${PORT}/api/prices`);
   console.log(`  🏪 Shops:   http://localhost:${PORT}/api/shops`);
   console.log(`  🚛 B2B:     http://localhost:${PORT}/api/b2b\n`);
