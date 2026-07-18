@@ -38,10 +38,24 @@ export default function App() {
   const [reportOpen, setReportOpen] = useState(false);
   const [b2bSearch, setB2bSearch] = useState('');
   const [toast, setToast] = useState(null);
+  
+  // Theme state
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     fetchData();
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -77,7 +91,7 @@ export default function App() {
 
   return (
     <div>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} toggleTheme={toggleTheme} />
 
       <div className="main-content">
         <HeroSection

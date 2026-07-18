@@ -46,11 +46,18 @@ const PhoneIcon = () => (
 );
 
 export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
+  const [sortBy, setSortBy] = React.useState('recent'); // 'recent' or 'price_asc'
+
   const filteredListings = listings.filter(l =>
     l.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.farmer.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (sortBy === 'price_asc') {
+      return a.pricePerKg - b.pricePerKg;
+    }
+    return 0; // fallback to default (which is usually recent from API)
+  });
 
   return (
     <div className="b2b-container animate-fade-in-up">
@@ -64,6 +71,20 @@ export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className={`filter-chip ${sortBy === 'recent' ? 'active' : ''}`}
+            onClick={() => setSortBy('recent')}
+          >
+            Plus récents
+          </button>
+          <button 
+            className={`filter-chip ${sortBy === 'price_asc' ? 'active' : ''}`}
+            onClick={() => setSortBy('price_asc')}
+          >
+            Moins chers
+          </button>
         </div>
       </div>
 
@@ -122,10 +143,16 @@ export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
                     </div>
                   </td>
                   <td>
-                    <button className="contact-btn">
+                    <a 
+                      href={`https://wa.me/212600000000?text=${encodeURIComponent(`Bonjour, je suis intéressé par votre offre de ${listing.quantity} ${listing.unit} de ${listing.product} à ${listing.pricePerKg} DH/kg.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="contact-btn"
+                      style={{ textDecoration: 'none', display: 'inline-flex' }}
+                    >
                       <PhoneIcon />
-                      Contacter
-                    </button>
+                      WhatsApp
+                    </a>
                   </td>
                 </tr>
               ))}

@@ -7,7 +7,20 @@ const LeafIcon = () => (
   </svg>
 );
 
-export default function Navbar({ activeTab, setActiveTab }) {
+const MoonIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+  </svg>
+);
+
+const SunIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+  </svg>
+);
+
+export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -28,18 +41,42 @@ export default function Navbar({ activeTab, setActiveTab }) {
             <span className="navbar-subtitle">Bernoussi</span>
           </div>
         </div>
-        <div className="navbar-tabs">
-          <button
-            className={`navbar-tab ${activeTab === 'b2c' ? 'active-b2c' : ''}`}
-            onClick={() => setActiveTab('b2c')}
+        
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className="navbar-tabs">
+            <button
+              className={`navbar-tab ${activeTab === 'b2c' ? 'active-b2c' : ''}`}
+              onClick={() => setActiveTab('b2c')}
+            >
+              📊 Info-Prix
+            </button>
+            <button
+              className={`navbar-tab ${activeTab === 'b2b' ? 'active-b2b' : ''}`}
+              onClick={() => setActiveTab('b2b')}
+            >
+              🏭 Marché B2B
+            </button>
+          </div>
+
+          <button 
+            onClick={toggleTheme} 
+            className="theme-toggle"
+            aria-label="Toggle Dark Mode"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--slate-200)',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--slate-600)',
+              transition: 'all var(--transition-fast)'
+            }}
           >
-            📊 Info-Prix
-          </button>
-          <button
-            className={`navbar-tab ${activeTab === 'b2b' ? 'active-b2b' : ''}`}
-            onClick={() => setActiveTab('b2b')}
-          >
-            🏭 Marché B2B
+            {theme === 'light' ? <MoonIcon /> : <SunIcon />}
           </button>
         </div>
       </div>

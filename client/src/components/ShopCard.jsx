@@ -42,10 +42,17 @@ export default function ShopCard({ shop }) {
             {shop.respectIndex}% prix justes
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span className="distance-tag">
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.name + ' ' + shop.zone)}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="distance-tag"
+              style={{ textDecoration: 'none' }}
+              title="Voir sur Google Maps"
+            >
               <MapPinIcon />
               {shop.distance}
-            </span>
+            </a>
             <span className={`shop-status ${shop.status}`}>
               <span className="dot" />
               {shop.status === 'open' ? 'Ouvert' : 'Fermé'}
