@@ -28,6 +28,18 @@ const AlertIcon = () => (
   </svg>
 );
 
+const getProductEmoji = (name) => {
+  const n = name.toLowerCase();
+  if (n.includes('tomate')) return '🍅';
+  if (n.includes('oignon')) return '🧅';
+  if (n.includes('pomme de terre')) return '🥔';
+  if (n.includes('carotte')) return '🥕';
+  if (n.includes('courgette') || n.includes('concombre')) return '🥒';
+  if (n.includes('poivron')) return '🫑';
+  if (n.includes('aubergine')) return '🍆';
+  return '🥬';
+};
+
 export default function PriceCard({ item }) {
   const getTrendIcon = () => {
     switch (item.trend) {
@@ -37,65 +49,59 @@ export default function PriceCard({ item }) {
     }
   };
 
-  const getTrendLabel = () => {
-    switch (item.trend) {
-      case 'up': return 'En hausse';
-      case 'down': return 'En baisse';
-      default: return 'Stable';
-    }
-  };
-
-  // Calculate bar segment widths based on price ranges
-  const maxPrice = item.recommendedRetail.max + 1;
-  const wholesalePercent = (item.wholesalePrice / maxPrice) * 100;
-  const fairPercent = ((item.recommendedRetail.max - item.wholesalePrice) / maxPrice) * 100;
-  const highPercent = 100 - wholesalePercent - fairPercent;
+  const isHigh = item.currentMarketAvg > item.recommendedRetail.max;
+  const diff = ((item.currentMarketAvg - item.wholesalePrice) / item.wholesalePrice * 100).toFixed(0);
 
   return (
-    <div className={`price-card ${item.alert ? 'has-alert' : ''}`}>
-      <div className="price-card-header">
-        <div>
-          <div className="price-card-name">{item.name}</div>
-          <div className="price-card-unit">par {item.unit}</div>
+    <div className={`price-card premium-card ${item.alert ? 'has-alert' : ''}`}>
+      <div className="premium-card-header">
+        <div className="premium-icon-box">
+          <span className="premium-emoji">{getProductEmoji(item.name)}</span>
         </div>
-        <span className={`trend-badge ${item.trend}`}>
-          {getTrendIcon()}
-          {getTrendLabel()}
-        </span>
-      </div>
-
-      <div className="price-card-prices">
-        <div className="price-item wholesale">
-          <div className="price-item-label">Gros</div>
-          <div className="price-item-value">{item.wholesalePrice} DH</div>
+        <div className="premium-title-box">
+          <h3 className="premium-name">{item.name}</h3>
+          <span className="premium-unit">par {item.unit}</span>
         </div>
-        <div className="price-item recommended">
-          <div className="price-item-label">Détail Juste</div>
-          <div className="price-item-value">{item.recommendedRetail.min}-{item.recommendedRetail.max}</div>
-        </div>
-        <div className="price-item market">
-          <div className="price-item-label">Marché Actuel</div>
-          <div className="price-item-value">{item.currentMarketAvg} DH</div>
+        <div className="premium-trend">
+          <span className={`trend-pill ${item.trend}`}>
+            {getTrendIcon()}
+          </span>
         </div>
       </div>
 
-      <div className="price-bar-container">
-        <div className="price-bar">
-          <div className="price-bar-segment good" style={{ width: `${wholesalePercent}%` }} />
-          <div className="price-bar-segment fair" style={{ width: `${fairPercent}%` }} />
-          <div className="price-bar-segment high" style={{ width: `${highPercent}%` }} />
+      <div className="premium-main-price">
+        <div className="main-price-label">Moyenne au Marché</div>
+        <div className="main-price-row">
+          <div className={`main-price-value ${isHigh ? 'text-red' : 'text-emerald'}`}>
+            {item.currentMarketAvg} <span className="currency">DH</span>
+          </div>
+          {item.trend === 'up' && <span className="price-status-badge bad">En hausse</span>}
+          {item.trend === 'down' && <span className="price-status-badge good">En baisse</span>}
+          {item.trend === 'stable' && <span className="price-status-badge neutral">Stable</span>}
         </div>
-        <div className="price-bar-labels">
-          <span className="good">{item.wholesalePrice} DH</span>
-          <span className="fair">{item.recommendedRetail.min} - {item.recommendedRetail.max} DH</span>
-          <span className="high">&gt; {(item.recommendedRetail.max + 0.5).toFixed(1)} DH</span>
+      </div>
+
+      <div className="premium-stats">
+        <div className="stat-box">
+          <span className="stat-label">Prix de Gros</span>
+          <span className="stat-value">{item.wholesalePrice} <small>DH</small></span>
+        </div>
+        <div className="stat-divider" />
+        <div className="stat-box">
+          <span className="stat-label">Détail Conseillé</span>
+          <span className="stat-value">{item.recommendedRetail.min}-{item.recommendedRetail.max} <small>DH</small></span>
+        </div>
+        <div className="stat-divider" />
+        <div className="stat-box">
+          <span className="stat-label">Marge Actuelle</span>
+          <span className={`stat-value ${isHigh ? 'text-red' : 'text-emerald'}`}>+{diff}%</span>
         </div>
       </div>
 
       {item.alert && (
-        <div className="alert-tag">
-          <AlertIcon />
-          Prix au-dessus du seuil recommandé
+        <div className="premium-alert">
+          <div className="premium-alert-icon"><AlertIcon /></div>
+          <div className="premium-alert-text">Prix abusif ! Dépasse le seuil recommandé.</div>
         </div>
       )}
     </div>
