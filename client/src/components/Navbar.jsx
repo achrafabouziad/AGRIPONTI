@@ -81,8 +81,15 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, us
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderLeft: '1px solid var(--slate-200)', paddingLeft: '16px' }}>
             {user ? (
               <>
+                {user.photoURL && (
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profil" 
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--slate-200)' }} 
+                  />
+                )}
                 <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--slate-600)' }}>
-                  {user.name || user.phone || 'Utilisateur'}
+                  {user.displayName || user.email || user.phoneNumber || 'Utilisateur'}
                 </span>
                 <button 
                   onClick={onLogout}
