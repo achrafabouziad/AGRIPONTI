@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBVOvbEhhBPxjHq4nycS8O4VT6xWELgWYo",
@@ -18,7 +18,7 @@ try {
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
 } catch (e) {
-  console.warn("Firebase is not properly configured yet. Please update client/src/firebase.js");
+  console.warn("Firebase is not properly configured yet.");
 }
 
-export { auth, googleProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber };
+export { auth, googleProvider, signInWithPopup };

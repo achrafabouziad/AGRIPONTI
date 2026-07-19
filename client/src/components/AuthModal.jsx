@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { auth, googleProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber } from '../firebase';
+import React, { useState } from 'react';
+import { auth, googleProvider, signInWithPopup } from '../firebase';
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -11,11 +11,7 @@ const GoogleIcon = () => (
 );
 
 export default function AuthModal({ onClose, onLoginSuccess }) {
-  const [method, setMethod] = useState('choice'); // choice, phone
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
   const [error, setError] = useState('');
 
   const sendIdTokenToServer = async (idToken) => {
@@ -52,62 +48,6 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     }
   };
 
-  useEffect(() => {
-    if (method === 'phone') {
-      if (!window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible'
-          });
-        } catch (e) {
-          console.error("Recaptcha Init Error:", e);
-        }
-      }
-    }
-    return () => {
-      if (window.recaptchaVerifier && method !== 'phone') {
-        try {
-          window.recaptchaVerifier.clear();
-        } catch(e) {}
-        window.recaptchaVerifier = null;
-      }
-    }
-  }, [method]);
-
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setError('');
-      
-      const formattedPhone = phone.startsWith('+') ? phone : '+212' + phone.replace(/^0/, '');
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
-      setConfirmationResult(confirmation);
-    } catch (err) {
-      setError(`Erreur: ${err.message}`);
-      console.error(err);
-      // We don't clear the verifier here anymore, so the user can just click again
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setError('');
-      const result = await confirmationResult.confirm(otp);
-      const idToken = await result.user.getIdToken();
-      await sendIdTokenToServer(idToken);
-    } catch (err) {
-      setError("Code OTP invalide.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
@@ -117,62 +57,15 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
 
         {error && <div style={{ color: 'red', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
 
-        {method === 'choice' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <button 
-              onClick={handleGoogleLogin} 
-              disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '12px', background: 'white', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              <GoogleIcon /> Continuer avec Google
-            </button>
-            
-            <div style={{ textAlign: 'center', color: '#888', fontSize: '0.9rem' }}>ou</div>
-            
-            <button 
-              onClick={() => setMethod('phone')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '12px', background: 'var(--emerald-600)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              📱 Connexion par Téléphone
-            </button>
-          </div>
-        )}
-
-        {method === 'phone' && !confirmationResult && (
-          <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ fontSize: '0.9rem', color: '#666' }}>Entrez votre numéro de téléphone (Maroc)</p>
-            <input 
-              type="tel" 
-              placeholder="06 XX XX XX XX" 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)}
-              className="modal-input"
-              required
-            />
-            <div id="recaptcha-container"></div>
-            <button type="submit" disabled={loading} className="modal-submit" style={{ background: 'var(--emerald-600)', color: 'white' }}>
-              {loading ? 'Envoi...' : 'Envoyer le code OTP'}
-            </button>
-            <button type="button" onClick={() => setMethod('choice')} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>Retour</button>
-          </form>
-        )}
-
-        {method === 'phone' && confirmationResult && (
-          <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ fontSize: '0.9rem', color: '#666' }}>Entrez le code reçu par SMS</p>
-            <input 
-              type="text" 
-              placeholder="123456" 
-              value={otp} 
-              onChange={e => setOtp(e.target.value)}
-              className="modal-input"
-              required
-            />
-            <button type="submit" disabled={loading} className="modal-submit" style={{ background: 'var(--emerald-600)', color: 'white' }}>
-              {loading ? 'Vérification...' : 'Valider'}
-            </button>
-          </form>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <button 
+            onClick={handleGoogleLogin} 
+            disabled={loading}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '14px', background: 'white', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', width: '100%' }}
+          >
+            {loading ? 'Connexion en cours...' : <><GoogleIcon /> Continuer avec Google</>}
+          </button>
+        </div>
       </div>
     </div>
   );
