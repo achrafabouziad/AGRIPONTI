@@ -48,10 +48,11 @@ app.use(cookieParser());
 
 // ── Auth Middleware ──────────────────────────────────────────────
 const requireAuth = async (req, res, next) => {
-  const sessionCookie = req.cookies.session || '';
-  if (!sessionCookie) return res.status(401).json({ error: 'Non autorisé' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Non autorisé' });
+  const idToken = authHeader.split('Bearer ')[1];
   try {
-    const decodedClaims = await getAuth().verifySessionCookie(sessionCookie, true);
+    const decodedClaims = await getAuth().verifyIdToken(idToken);
     req.user = decodedClaims;
     next();
   } catch (error) {
@@ -61,13 +62,12 @@ const requireAuth = async (req, res, next) => {
 
 // ── Auth Routes ──────────────────────────────────────────────────
 
-app.post('/api/auth/session', async (req, res) => {
+app.post('/api/auth/sync', async (req, res) => {
   if (firebaseInitError) {
     return res.status(500).json({ error: 'Firebase Init Failed', details: firebaseInitError.message || firebaseInitError.toString() });
   }
 
   const { idToken } = req.body;
-  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
   try {
     const decodedIdToken = await getAuth().verifyIdToken(idToken);
     
@@ -82,12 +82,9 @@ app.post('/api/auth/session', async (req, res) => {
         name = EXCLUDED.name
     `, [uid, email || null, phone_number || null, name || null]);
 
-    // Create session cookie
-    const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
-    res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true, sameSite: 'None' });
     res.json({ status: 'success' });
   } catch (error) {
-    console.error("Auth Session Error:", error);
+    console.error("Auth Sync Error:", error);
     res.status(401).json({ error: 'Requête non autorisée', details: error.message });
   }
 });
@@ -98,23 +95,6 @@ app.get('/api/env-debug', (req, res) => {
     hasBase64: !!process.env.FIREBASE_SERVICE_ACCOUNT_BASE64,
     hasRaw: !!process.env.FIREBASE_SERVICE_ACCOUNT
   });
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('session');
-  res.json({ status: 'success' });
-});
-
-app.get('/api/auth/me', async (req, res) => {
-  const sessionCookie = req.cookies.session || '';
-  if (!sessionCookie) return res.status(401).json({ user: null });
-  try {
-    const decodedClaims = await getAuth().verifySessionCookie(sessionCookie, true);
-    const userRes = await db.query('SELECT * FROM users WHERE uid = $1', [decodedClaims.uid]);
-    res.json({ user: userRes.rows[0] });
-  } catch (error) {
-    res.status(401).json({ user: null });
-  }
 });
 
 // ── Price Indices (B2C) ────────────────────────────────────────

@@ -31,13 +31,17 @@ export default function ReportModal({ isOpen, onClose, onSuccess }) {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/report`, {
+      const idToken = await import('../firebase').then(m => m.auth.currentUser?.getIdToken());
+      const res = await fetch(`${API_URL}/api/reports`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
-          shopName: formData.shopName,
+          shop_name: formData.shopName,
           product: formData.product,
-          reportedPrice: formData.reportedPrice ? parseFloat(formData.reportedPrice) : null,
+          reported_price: formData.reportedPrice ? parseFloat(formData.reportedPrice) : null,
           description: formData.description,
         }),
       });

@@ -22,11 +22,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   const sendIdTokenToServer = async (idToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://agriponti.onrender.com' : 'http://localhost:3001');
-      const res = await fetch(`${API_URL}/api/auth/session`, {
+      const res = await fetch(`${API_URL}/api/auth/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-        credentials: 'include'
+        body: JSON.stringify({ idToken })
       });
       if (res.ok) {
         onLoginSuccess();
@@ -72,7 +71,8 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       const idToken = await result.user.getIdToken();
       await sendIdTokenToServer(idToken);
     } catch (err) {
-      if (err.code === 'auth/email-already-in-use') setError('Cet email est déjà utilisé.');
+      if (err.code === 'auth/invalid-email') setError('L\'adresse email n\'est pas valide (ex: nom@domaine.com).');
+      else if (err.code === 'auth/email-already-in-use') setError('Cet email est déjà utilisé.');
       else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') setError('Email ou mot de passe incorrect.');
       else setError(err.message || 'Erreur lors de l\'authentification.');
     } finally {

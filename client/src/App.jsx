@@ -6,6 +6,7 @@ import ShopCard from './components/ShopCard';
 import B2BTable from './components/B2BTable';
 import ReportModal from './components/ReportModal';
 import AuthModal from './components/AuthModal';
+import { auth, onAuthStateChanged } from './firebase';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://agriponti.onrender.com' : 'http://localhost:3001');
 
@@ -49,11 +50,15 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    checkAuth();
     // Load saved theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
   }, []);
 
   const toggleTheme = () => {
@@ -82,24 +87,9 @@ export default function App() {
     }
   };
 
-  const checkAuth = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      setUser(null);
-    }
-  };
-
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-      setUser(null);
+      await auth.signOut();
       showToast('Déconnecté avec succès', 'success');
     } catch (err) {
       console.error(err);
