@@ -11,6 +11,18 @@ async function initDatabase() {
   const client = await pool.connect();
   try {
     await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        uid TEXT UNIQUE NOT NULL,
+        email TEXT,
+        phone TEXT,
+        name TEXT,
+        role TEXT DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS prices (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -66,6 +78,10 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Add user_id to existing tables if they don't have it
+    await client.query(`ALTER TABLE b2b_listings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
+    await client.query(`ALTER TABLE reports ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
 
     // ── Seed Data ──────────────────────────────────────────────────
     const priceCount = await client.query('SELECT COUNT(*) FROM prices');

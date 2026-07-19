@@ -5,6 +5,7 @@ import PriceCard from './components/PriceCard';
 import ShopCard from './components/ShopCard';
 import B2BTable from './components/B2BTable';
 import ReportModal from './components/ReportModal';
+import AuthModal from './components/AuthModal';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://agriponti.onrender.com' : 'http://localhost:3001');
 
@@ -39,11 +40,16 @@ export default function App() {
   const [b2bSearch, setB2bSearch] = useState('');
   const [toast, setToast] = useState(null);
   
+  // Auth state
+  const [user, setUser] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  
   // Theme state
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     fetchData();
+    checkAuth();
     // Load saved theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -76,6 +82,38 @@ export default function App() {
     }
   };
 
+  const checkAuth = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`);
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      setUser(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST' });
+      setUser(null);
+      showToast('Déconnecté avec succès', 'success');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleActionRequiringAuth = (actionCallback) => {
+    if (user) {
+      actionCallback();
+    } else {
+      setAuthModalOpen(true);
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
@@ -91,7 +129,15 @@ export default function App() {
 
   return (
     <div>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} toggleTheme={toggleTheme} />
+      <Navbar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+        user={user}
+        onLoginClick={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
+      />
 
       <div className="main-content">
         <HeroSection
@@ -114,7 +160,7 @@ export default function App() {
                   <span className="section-badge">
                     Mis à jour aujourd'hui
                   </span>
-                  <button className="btn-report" onClick={() => setReportOpen(true)}>
+                  <button className="btn-report" onClick={() => handleActionRequiringAuth(() => setReportOpen(true))}>
                     <AlertIcon />
                     Signaler
                   </button>
@@ -180,6 +226,17 @@ export default function App() {
         onClose={() => setReportOpen(false)}
         onSuccess={() => showToast('Signalement envoyé avec succès !')}
       />
+
+      {/* Auth Modal */}
+      {authModalOpen && (
+        <AuthModal 
+          onClose={() => setAuthModalOpen(false)} 
+          onLoginSuccess={() => {
+            checkAuth();
+            showToast('Connecté avec succès !');
+          }}
+        />
+      )}
 
       {/* Toast Notification */}
       {toast && (

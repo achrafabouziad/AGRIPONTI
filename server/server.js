@@ -1,13 +1,83 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const admin = require('firebase-admin');
 const db = require('./db');
+
+try {
+  const serviceAccount = require('./serviceAccountKey.json');
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (err) {
+  console.warn('Firebase Admin initialization skipped: serviceAccountKey.json not found.');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
+
+// ── Auth Middleware ──────────────────────────────────────────────
+const requireAuth = async (req, res, next) => {
+  const sessionCookie = req.cookies.session || '';
+  if (!sessionCookie) return res.status(401).json({ error: 'Non autorisé' });
+  try {
+    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    req.user = decodedClaims;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Session invalide' });
+  }
+};
+
+// ── Auth Routes ──────────────────────────────────────────────────
+
+app.post('/api/auth/session', async (req, res) => {
+  const { idToken } = req.body;
+  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+  try {
+    const decodedIdToken = await admin.auth().verifyIdToken(idToken);
+    
+    // Upsert user in database
+    const { uid, email, phone_number, name } = decodedIdToken;
+    await db.query(`
+      INSERT INTO users (uid, email, phone, name)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (uid) DO UPDATE SET 
+        email = EXCLUDED.email, 
+        phone = EXCLUDED.phone, 
+        name = EXCLUDED.name
+    `, [uid, email || null, phone_number || null, name || null]);
+
+    // Create session cookie
+    const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
+    res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+    res.json({ status: 'success' });
+  } catch (error) {
+    res.status(401).json({ error: 'Requête non autorisée' });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('session');
+  res.json({ status: 'success' });
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  const sessionCookie = req.cookies.session || '';
+  if (!sessionCookie) return res.status(401).json({ user: null });
+  try {
+    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    const userRes = await db.query('SELECT * FROM users WHERE uid = $1', [decodedClaims.uid]);
+    res.json({ user: userRes.rows[0] });
+  } catch (error) {
+    res.status(401).json({ user: null });
+  }
+});
 
 // ── Price Indices (B2C) ────────────────────────────────────────
 
@@ -71,23 +141,22 @@ app.get('/api/b2b', async (req, res) => {
   }
 });
 
-app.post('/api/b2b', async (req, res) => {
+// Create new B2B listing (Protected)
+app.post('/api/b2b', requireAuth, async (req, res) => {
+  const { farmer, region, product, variety, quantity, unit, pricePerKg, transportIncluded } = req.body;
+  const userId = req.user ? req.user.uid : null;
   try {
-    const { farmer, region, product, variety, quantity, unit, pricePerKg, dateLabel, transportIncluded } = req.body;
+    const userRes = await db.query('SELECT id FROM users WHERE uid = $1', [userId]);
+    const internalUserId = userRes.rows.length > 0 ? userRes.rows[0].id : null;
 
-    if (!farmer || !region || !product || !quantity || !pricePerKg) {
-      return res.status(400).json({ error: 'Champs requis manquants' });
-    }
-
-    const result = await db.query(`
-      INSERT INTO b2b_listings (farmer, region, product, variety, quantity, unit, price_per_kg, date_label, transport_included)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id
-    `, [farmer, region, product, variety || null, quantity, unit || 'Tonnes', pricePerKg, dateLabel || "Aujourd'hui", transportIncluded ? 1 : 0]);
-
-    res.status(201).json({ id: result.rows[0].id, message: 'Offre publiée avec succès' });
+    const result = await db.query(
+      'INSERT INTO b2b_listings (farmer, region, product, variety, quantity, unit, price_per_kg, transport_included, verified, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [farmer, region, product, variety, quantity, unit, pricePerKg, transportIncluded ? 1 : 0, false, internalUserId]
+    );
+    res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create listing' });
   }
 });
 
@@ -113,23 +182,22 @@ app.get('/api/shops', async (req, res) => {
 
 // ── Reports ────────────────────────────────────────────────────
 
-app.post('/api/report', async (req, res) => {
+// Submit a price report (Protected)
+app.post('/api/reports', requireAuth, async (req, res) => {
+  const { shop_name, product, reported_price, description } = req.body;
+  const userId = req.user ? req.user.uid : null;
   try {
-    const { shopName, product, reportedPrice, description } = req.body;
+    const userRes = await db.query('SELECT id FROM users WHERE uid = $1', [userId]);
+    const internalUserId = userRes.rows.length > 0 ? userRes.rows[0].id : null;
 
-    if (!shopName || !product) {
-      return res.status(400).json({ error: 'Champs requis manquants' });
-    }
-
-    const result = await db.query(`
-      INSERT INTO reports (shop_name, product, reported_price, description)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id
-    `, [shopName, product, reportedPrice || null, description || null]);
-
-    res.status(201).json({ id: result.rows[0].id, message: 'Signalement enregistré. Merci !' });
+    const result = await db.query(
+      'INSERT INTO reports (shop_name, product, reported_price, description, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [shop_name, product, reported_price, description, internalUserId]
+    );
+    res.json({ success: true, report: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit report' });
   }
 });
 

@@ -20,7 +20,7 @@ const SunIcon = () => (
   </svg>
 );
 
-export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme }) {
+export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, user, onLoginClick, onLogout }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -78,6 +78,28 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme }) 
           >
             {theme === 'light' ? <MoonIcon /> : <SunIcon />}
           </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderLeft: '1px solid var(--slate-200)', paddingLeft: '16px' }}>
+            {user ? (
+              <>
+                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--slate-600)' }}>
+                  {user.name || user.phone || 'Utilisateur'}
+                </span>
+                <button 
+                  onClick={onLogout}
+                  style={{ background: 'transparent', border: '1px solid var(--red-200)', color: 'var(--red-500)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                >
+                  Quitter
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={onLoginClick}
+                style={{ background: 'var(--emerald-600)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+              >
+                Se Connecter
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>
