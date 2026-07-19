@@ -54,15 +54,20 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   useEffect(() => {
     if (method === 'phone') {
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible'
-        });
+        try {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible'
+          });
+        } catch (e) {
+          console.error("Recaptcha Init Error:", e);
+        }
       }
     }
     return () => {
-      // Cleanup recaptcha when component unmounts or method changes
       if (window.recaptchaVerifier && method !== 'phone') {
-        window.recaptchaVerifier.clear();
+        try {
+          window.recaptchaVerifier.clear();
+        } catch(e) {}
         window.recaptchaVerifier = null;
       }
     }
