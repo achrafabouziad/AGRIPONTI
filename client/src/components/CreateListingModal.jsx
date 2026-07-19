@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { storage, ref, uploadBytes, getDownloadURL } from '../firebase';
 import { auth } from '../firebase';
 
 const CloseIcon = () => (
@@ -44,9 +43,21 @@ export default function CreateListingModal({ isOpen, onClose, onSuccess }) {
 
   const uploadImage = async () => {
     if (!imageFile) return null;
-    const imageRef = ref(storage, `b2b_listings/${auth.currentUser.uid}_${Date.now()}_${imageFile.name}`);
-    await uploadBytes(imageRef, imageFile);
-    return await getDownloadURL(imageRef);
+    const uploadData = new FormData();
+    uploadData.append('image', imageFile);
+    
+    const res = await fetch('https://api.imgur.com/3/image', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Client-ID 546c25a59c58ad7'
+      },
+      body: uploadData
+    });
+    
+    if (!res.ok) throw new Error("Échec de l'upload de l'image");
+    
+    const data = await res.json();
+    return data.data.link;
   };
 
   const handleSubmit = async (e) => {
