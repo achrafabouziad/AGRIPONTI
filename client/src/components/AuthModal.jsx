@@ -26,7 +26,8 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         onLoginSuccess();
         onClose();
       } else {
-        setError('Échec de la création de session sécurisée.');
+        const errorData = await res.json().catch(() => ({}));
+        setError(`Échec serveur: ${errorData.details || 'Erreur inconnue'}`);
       }
     } catch (err) {
       setError('Erreur réseau.');

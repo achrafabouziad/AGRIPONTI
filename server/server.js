@@ -61,7 +61,8 @@ app.post('/api/auth/session', async (req, res) => {
     res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
     res.json({ status: 'success' });
   } catch (error) {
-    res.status(401).json({ error: 'Requête non autorisée' });
+    console.error("Auth Session Error:", error);
+    res.status(401).json({ error: 'Requête non autorisée', details: error.message });
   }
 });
 
