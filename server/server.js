@@ -88,6 +88,14 @@ app.post('/api/auth/session', async (req, res) => {
   }
 });
 
+app.get('/api/env-debug', (req, res) => {
+  res.json({
+    keys: Object.keys(process.env).filter(k => k.includes('FIREBASE')),
+    hasBase64: !!process.env.FIREBASE_SERVICE_ACCOUNT_BASE64,
+    hasRaw: !!process.env.FIREBASE_SERVICE_ACCOUNT
+  });
+});
+
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('session');
   res.json({ status: 'success' });
