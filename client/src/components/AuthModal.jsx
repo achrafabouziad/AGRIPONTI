@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from '../firebase';
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -13,6 +13,7 @@ const GoogleIcon = () => (
 export default function AuthModal({ onClose, onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   
   const [email, setEmail] = useState('');
@@ -43,6 +44,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     try {
       setLoading(true);
       setError('');
+      setSuccessMsg('');
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
       await sendIdTokenToServer(idToken);
@@ -60,6 +62,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     try {
       setLoading(true);
       setError('');
+      setSuccessMsg('');
       let result;
       if (isRegistering) {
         result = await createUserWithEmailAndPassword(auth, email, password);
@@ -77,6 +80,21 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) return setError("Veuillez d'abord saisir votre adresse email.");
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMsg('');
+      await sendPasswordResetEmail(auth, email);
+      setSuccessMsg("Lien de réinitialisation envoyé à votre email.");
+    } catch (err) {
+      setError("Erreur lors de l'envoi de l'email de réinitialisation.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="uno-overlay" onClick={onClose}>
       <div className="uno-modal" onClick={e => e.stopPropagation()}>
@@ -88,6 +106,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
             <h2 className="uno-title">{isRegistering ? 'Nouveaux clients' : 'Clients enregistrés'}</h2>
             
             {error && <div className="uno-error">{error}</div>}
+            {successMsg && <div className="uno-success" style={{ background: '#dcfce7', color: '#166534', padding: '10px', marginBottom: '20px', fontSize: '14px', borderRadius: '4px' }}>{successMsg}</div>}
             
             <button type="button" onClick={handleGoogleLogin} disabled={loading} className="uno-google-btn">
               {loading ? 'Patientez...' : (
@@ -103,13 +122,13 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               
               <label>MOT DE PASSE <span>*</span></label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!isRegistering} />
 
               <div className="uno-actions">
                 <button type="submit" className="uno-btn-green" disabled={loading}>
                   {isRegistering ? 'S\'INSCRIRE' : 'CONNEXION'}
                 </button>
-                {!isRegistering && <span className="uno-forgot">MOT DE PASSE OUBLIÉ ?</span>}
+                {!isRegistering && <span className="uno-forgot" onClick={handleForgotPassword} style={{ cursor: 'pointer' }}>MOT DE PASSE OUBLIÉ ?</span>}
               </div>
             </form>
           </div>
@@ -123,7 +142,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                 : "La création d'un compte a de nombreux avantages : consultation rapide, sauvegarder vos alertes, publier des annonces et bien plus."
               }
             </p>
-            <button className="uno-btn-green" onClick={() => { setIsRegistering(!isRegistering); setError(''); }} disabled={loading}>
+            <button className="uno-btn-green" onClick={() => { setIsRegistering(!isRegistering); setError(''); setSuccessMsg(''); }} disabled={loading}>
               {isRegistering ? 'SE CONNECTER' : 'CRÉER UN COMPTE'}
             </button>
           </div>
