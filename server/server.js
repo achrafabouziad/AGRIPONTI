@@ -4,13 +4,16 @@ const cookieParser = require('cookie-parser');
 const admin = require('firebase-admin');
 const db = require('./db');
 
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+
 try {
   const serviceAccount = require('./serviceAccountKey.json');
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+  initializeApp({
+    credential: cert(serviceAccount)
   });
 } catch (err) {
-  console.warn('Firebase Admin initialization skipped: serviceAccountKey.json not found.');
+  console.warn('Firebase Admin initialization skipped: ', err);
 }
 
 const app = express();
@@ -26,7 +29,7 @@ const requireAuth = async (req, res, next) => {
   const sessionCookie = req.cookies.session || '';
   if (!sessionCookie) return res.status(401).json({ error: 'Non autorisé' });
   try {
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    const decodedClaims = await getAuth().verifySessionCookie(sessionCookie, true);
     req.user = decodedClaims;
     next();
   } catch (error) {
@@ -40,7 +43,7 @@ app.post('/api/auth/session', async (req, res) => {
   const { idToken } = req.body;
   const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
   try {
-    const decodedIdToken = await admin.auth().verifyIdToken(idToken);
+    const decodedIdToken = await getAuth().verifyIdToken(idToken);
     
     // Upsert user in database
     const { uid, email, phone_number, name } = decodedIdToken;
@@ -54,7 +57,7 @@ app.post('/api/auth/session', async (req, res) => {
     `, [uid, email || null, phone_number || null, name || null]);
 
     // Create session cookie
-    const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
+    const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
     res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
     res.json({ status: 'success' });
   } catch (error) {
@@ -71,7 +74,7 @@ app.get('/api/auth/me', async (req, res) => {
   const sessionCookie = req.cookies.session || '';
   if (!sessionCookie) return res.status(401).json({ user: null });
   try {
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    const decodedClaims = await getAuth().verifySessionCookie(sessionCookie, true);
     const userRes = await db.query('SELECT * FROM users WHERE uid = $1', [decodedClaims.uid]);
     res.json({ user: userRes.rows[0] });
   } catch (error) {
