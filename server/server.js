@@ -9,10 +9,15 @@ const { getAuth } = require('firebase-admin/auth');
 
 try {
   let serviceAccount;
-  try {
-    serviceAccount = require('./serviceAccountKey.json');
-  } catch (err) {
-    serviceAccount = require('../serviceAccountKey.json'); // fallback to root
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+    const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
+    serviceAccount = JSON.parse(decoded);
+  } else {
+    try {
+      serviceAccount = require('./serviceAccountKey.json');
+    } catch (err) {
+      serviceAccount = require('../serviceAccountKey.json'); // fallback to root
+    }
   }
   
   initializeApp({
