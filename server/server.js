@@ -123,58 +123,54 @@ app.get('/api/prices', async (req, res) => {
 
 app.get('/api/b2b', async (req, res) => {
   try {
-    const { region, product } = req.query;
-    let query = 'SELECT * FROM b2b_listings WHERE 1=1';
-    const params = [];
-
-    if (region) {
-      params.push(`%${region}%`);
-      query += ` AND region LIKE $${params.length}`;
-    }
-    if (product) {
-      params.push(`%${product}%`);
-      query += ` AND product LIKE $${params.length}`;
-    }
-
-    query += ' ORDER BY created_at DESC';
-    const listings = await db.query(query, params);
-
-    const formatted = listings.rows.map(l => ({
-      id: l.id,
-      farmer: l.farmer,
-      region: l.region,
-      product: l.product,
-      variety: l.variety,
-      quantity: l.quantity,
-      unit: l.unit,
-      pricePerKg: l.price_per_kg,
-      dateLabel: l.date_label,
-      transportIncluded: Boolean(l.transport_included),
-      verified: Boolean(l.verified),
-      createdAt: l.created_at,
+    const result = await db.query(`
+      SELECT b2b_listings.*, users.name as user_name, users.phone as user_phone 
+      FROM b2b_listings 
+      LEFT JOIN users ON b2b_listings.user_id = users.id
+      ORDER BY b2b_listings.id DESC
+    `);
+    // Map database snake_case columns to camelCase for the frontend
+    const mapped = result.rows.map(row => ({
+      id: row.id,
+      farmer: row.farmer || row.user_name || 'Agriculteur',
+      phone: row.user_phone,
+      region: row.region,
+      product: row.product,
+      variety: row.variety,
+      quantity: row.quantity,
+      unit: row.unit,
+      pricePerKg: row.price_per_kg,
+      dateLabel: row.date_label,
+      transportIncluded: row.transport_included,
+      verified: row.verified,
+      imageUrl: row.image_url
     }));
-    res.json(formatted);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json(mapped);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Create new B2B listing (Protected)
 app.post('/api/b2b', requireAuth, async (req, res) => {
-  const { farmer, region, product, variety, quantity, unit, pricePerKg, transportIncluded } = req.body;
-  const userId = req.user ? req.user.uid : null;
   try {
-    const userRes = await db.query('SELECT id FROM users WHERE uid = $1', [userId]);
-    const internalUserId = userRes.rows.length > 0 ? userRes.rows[0].id : null;
+    const { product, variety, region, quantity, unit, pricePerKg, transportIncluded, imageUrl } = req.body;
+    
+    // Get the user's postgres ID
+    const userRes = await db.query('SELECT id, name FROM users WHERE uid = $1', [req.user.uid]);
+    if (userRes.rows.length === 0) return res.status(403).json({ error: 'Utilisateur non trouvé' });
+    const userId = userRes.rows[0].id;
+    const farmerName = userRes.rows[0].name || 'Agriculteur';
 
-    const result = await db.query(
-      'INSERT INTO b2b_listings (farmer, region, product, variety, quantity, unit, price_per_kg, transport_included, verified, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [farmer, region, product, variety, quantity, unit, pricePerKg, transportIncluded ? 1 : 0, false, internalUserId]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to create listing' });
+    const result = await db.query(`
+      INSERT INTO b2b_listings (farmer, region, product, variety, quantity, unit, price_per_kg, date_label, transport_included, verified, user_id, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *
+    `, [farmerName, region, product, variety || null, quantity, unit || 'Tonnes', pricePerKg, "Aujourd'hui", transportIncluded ? 1 : 0, 0, userId, imageUrl || null]);
+    
+    res.json({ status: 'success', listing: result.rows[0] });
+  } catch (error) {
+    console.error('B2B POST error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

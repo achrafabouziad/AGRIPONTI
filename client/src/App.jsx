@@ -5,6 +5,7 @@ import PriceCard from './components/PriceCard';
 import ShopCard from './components/ShopCard';
 import B2BTable from './components/B2BTable';
 import ReportModal from './components/ReportModal';
+import CreateListingModal from './components/CreateListingModal';
 import AuthModal from './components/AuthModal';
 import { auth, onAuthStateChanged } from './firebase';
 
@@ -38,6 +39,7 @@ export default function App() {
   const [b2bListings, setB2bListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
+  const [createListingOpen, setCreateListingOpen] = useState(false);
   const [b2bSearch, setB2bSearch] = useState('');
   const [toast, setToast] = useState(null);
   
@@ -204,6 +206,8 @@ export default function App() {
                 listings={b2bListings}
                 searchQuery={b2bSearch}
                 setSearchQuery={setB2bSearch}
+                user={user}
+                onPublishClick={() => handleActionRequiringAuth(() => setCreateListingOpen(true))}
               />
             )}
           </section>
@@ -215,6 +219,16 @@ export default function App() {
         isOpen={reportOpen}
         onClose={() => setReportOpen(false)}
         onSuccess={() => showToast('Signalement envoyé avec succès !')}
+      />
+
+      {/* Create Listing Modal */}
+      <CreateListingModal
+        isOpen={createListingOpen}
+        onClose={() => setCreateListingOpen(false)}
+        onSuccess={() => {
+          showToast('Annonce publiée avec succès !');
+          fetchData();
+        }}
       />
 
       {/* Auth Modal */}

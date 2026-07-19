@@ -45,47 +45,49 @@ const PhoneIcon = () => (
   </svg>
 );
 
-export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
-  const [sortBy, setSortBy] = React.useState('recent'); // 'recent' or 'price_asc'
+export default function B2BTable({ listings, searchQuery, setSearchQuery, onPublishClick, user }) {
+  const [sortBy, setSortBy] = React.useState('recent');
 
   const filteredListings = listings.filter(l =>
     l.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.farmer.toLowerCase().includes(searchQuery.toLowerCase())
   ).sort((a, b) => {
-    if (sortBy === 'price_asc') {
-      return a.pricePerKg - b.pricePerKg;
-    }
-    return 0; // fallback to default (which is usually recent from API)
+    if (sortBy === 'price_asc') return a.pricePerKg - b.pricePerKg;
+    return 0;
   });
 
   return (
     <div className="b2b-container animate-fade-in-up">
-      <div className="b2b-toolbar">
-        <div className="search-wrapper">
-          <span className="search-icon"><SearchIcon /></span>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Rechercher un produit, une région..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="b2b-toolbar" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
+          <div className="search-wrapper" style={{ flex: 1, minWidth: '250px' }}>
+            <span className="search-icon"><SearchIcon /></span>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Rechercher un produit, une région..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className={`filter-chip ${sortBy === 'recent' ? 'active' : ''}`} onClick={() => setSortBy('recent')}>
+              Plus récents
+            </button>
+            <button className={`filter-chip ${sortBy === 'price_asc' ? 'active' : ''}`} onClick={() => setSortBy('price_asc')}>
+              Moins chers
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            className={`filter-chip ${sortBy === 'recent' ? 'active' : ''}`}
-            onClick={() => setSortBy('recent')}
-          >
-            Plus récents
-          </button>
-          <button 
-            className={`filter-chip ${sortBy === 'price_asc' ? 'active' : ''}`}
-            onClick={() => setSortBy('price_asc')}
-          >
-            Moins chers
-          </button>
-        </div>
+        
+        <button 
+          onClick={onPublishClick}
+          style={{ background: 'var(--emerald-600)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <CameraIcon />
+          Publier une annonce
+        </button>
       </div>
 
       {filteredListings.length === 0 ? (
@@ -111,15 +113,27 @@ export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
               {filteredListings.map((listing, index) => (
                 <tr key={listing.id} style={{ animationDelay: `${index * 50}ms` }}>
                   <td>
-                    <div className="product-cell">
-                      <span className="product-name">{listing.product}</span>
-                      {listing.variety && <span className="product-variety">{listing.variety}</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {listing.imageUrl ? (
+                        <img src={listing.imageUrl} alt={listing.product} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--slate-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--slate-400)' }}>
+                          <FactoryIcon />
+                        </div>
+                      )}
+                      <div className="product-cell">
+                        <span className="product-name">{listing.product}</span>
+                        {listing.variety && <span className="product-variety">{listing.variety}</span>}
+                      </div>
                     </div>
                   </td>
                   <td>
                     <div className="region-cell">
                       <MapPinIcon />
-                      {listing.region}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span>{listing.region}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)' }}>{listing.farmer}</span>
+                      </div>
                     </div>
                   </td>
                   <td>
@@ -134,17 +148,11 @@ export default function B2BTable({ listings, searchQuery, setSearchQuery }) {
                         <TruckIcon />
                         {listing.transportIncluded ? 'Transport inclus' : 'Sans transport'}
                       </span>
-                      {listing.verified && (
-                        <span className="verified-badge">
-                          <CheckIcon />
-                          Vérifié
-                        </span>
-                      )}
                     </div>
                   </td>
                   <td>
                     <a 
-                      href={`https://wa.me/212600000000?text=${encodeURIComponent(`Bonjour, je suis intéressé par votre offre de ${listing.quantity} ${listing.unit} de ${listing.product} à ${listing.pricePerKg} DH/kg.`)}`}
+                      href={`https://wa.me/212${listing.phone ? listing.phone.replace(/^0/, '') : '60000000'}?text=${encodeURIComponent(`Bonjour, je suis intéressé par votre annonce de ${listing.quantity} ${listing.unit} de ${listing.product} à ${listing.pricePerKg} DH/kg sur AGRIPONTI.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="contact-btn"

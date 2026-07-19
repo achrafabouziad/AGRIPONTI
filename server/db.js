@@ -79,8 +79,9 @@ async function initDatabase() {
       )
     `);
 
-    // Add user_id to existing tables if they don't have it
+    // Add user_id and image_url to existing tables if they don't have it
     await client.query(`ALTER TABLE b2b_listings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
+    await client.query(`ALTER TABLE b2b_listings ADD COLUMN IF NOT EXISTS image_url TEXT`);
     await client.query(`ALTER TABLE reports ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
 
     // ── Seed Data ──────────────────────────────────────────────────
