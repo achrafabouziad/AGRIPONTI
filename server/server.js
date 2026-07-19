@@ -8,12 +8,18 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 
 try {
-  const serviceAccount = require('./serviceAccountKey.json');
+  let serviceAccount;
+  try {
+    serviceAccount = require('./serviceAccountKey.json');
+  } catch (err) {
+    serviceAccount = require('../serviceAccountKey.json'); // fallback to root
+  }
+  
   initializeApp({
     credential: cert(serviceAccount)
   });
 } catch (err) {
-  console.warn('Firebase Admin initialization skipped: ', err);
+  console.warn('Firebase Admin initialization skipped or failed: ', err);
 }
 
 const app = express();
