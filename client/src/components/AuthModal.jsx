@@ -69,8 +69,12 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
     } catch (err) {
-      setError("Erreur lors de l'envoi du SMS. Vérifiez le numéro.");
+      setError(`Erreur: ${err.message}`);
       console.error(err);
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
     } finally {
       setLoading(false);
     }
