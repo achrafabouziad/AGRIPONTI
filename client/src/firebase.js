@@ -1,14 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber } from 'firebase/auth';
 
-// TODO: Replace with your actual Firebase config
 const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME"
+  apiKey: "AIzaSyBXY1R_phRgCUsYMW8AJDh8DbTf485N3gk",
+  authDomain: "agriponti-auth.firebaseapp.com",
+  projectId: "agriponti-auth",
+  storageBucket: "agriponti-auth.firebasestorage.app",
+  messagingSenderId: "479608377458",
+  appId: "1:479608377458:web:c064d35ebde1f957c872eb",
+  measurementId: "G-279TB06JNW"
 };
 
 let app, auth, googleProvider;
