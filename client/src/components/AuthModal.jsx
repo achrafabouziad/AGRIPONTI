@@ -51,30 +51,36 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     }
   };
 
-  const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible'
-      });
+  useEffect(() => {
+    if (method === 'phone') {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible'
+        });
+      }
     }
-  };
+    return () => {
+      // Cleanup recaptcha when component unmounts or method changes
+      if (window.recaptchaVerifier && method !== 'phone') {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    }
+  }, [method]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError('');
-      setupRecaptcha();
+      
       const formattedPhone = phone.startsWith('+') ? phone : '+212' + phone.replace(/^0/, '');
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
     } catch (err) {
       setError(`Erreur: ${err.message}`);
       console.error(err);
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
+      // We don't clear the verifier here anymore, so the user can just click again
     } finally {
       setLoading(false);
     }
