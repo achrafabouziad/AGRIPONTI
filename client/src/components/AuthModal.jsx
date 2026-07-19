@@ -51,44 +51,61 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   };
 
   return (
-    <div className="modal-overlay auth-overlay" onClick={onClose}>
-      <div className="modal-content auth-modal" onClick={e => e.stopPropagation()}>
-        <button className="modal-close auth-close" onClick={onClose}>✕</button>
+    <div className="uno-overlay" onClick={onClose}>
+      <div className="uno-modal" onClick={e => e.stopPropagation()}>
+        <button className="uno-close" onClick={onClose}>✕</button>
         
-        <div className="auth-header">
-          <div className="auth-logo">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+        <div className="uno-columns">
+          {/* Left Column */}
+          <div className="uno-left">
+            <h2 className="uno-title">Clients enregistrés</h2>
+            
+            {error && <div className="uno-error">{error}</div>}
+            
+            <button 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+              className="uno-google-btn"
+            >
+              {loading ? 'Connexion en cours...' : (
+                <>
+                  <div className="uno-google-icon-wrapper">
+                    <GoogleIcon />
+                  </div>
+                  <span>Se connecter avec Google</span>
+                </>
+              )}
+            </button>
+
+            <div className="uno-form">
+              <label>EMAIL <span>*</span></label>
+              <input type="email" disabled placeholder="Connexion Google uniquement" />
+              
+              <label>MOT DE PASSE <span>*</span></label>
+              <input type="password" disabled />
+            </div>
+
+            <div className="uno-actions">
+              <button className="uno-btn-green" onClick={handleGoogleLogin} disabled={loading}>
+                CONNEXION
+              </button>
+              <span className="uno-forgot">MOT DE PASSE OUBLIÉ ?</span>
+            </div>
           </div>
-          <h2 className="auth-title">Bienvenue</h2>
-          <p className="auth-subtitle">Connectez-vous pour accéder aux prix de gros et contacter les producteurs.</p>
+
+          {/* Right Column */}
+          <div className="uno-right">
+            <h2 className="uno-title">Nouveaux clients</h2>
+            <p className="uno-desc">
+              La création d'un compte a de nombreux avantages : consultation rapide, sauvegarder 
+              plusieurs adresses, suivre les commandes, et bien plus encore.
+            </p>
+            <button className="uno-btn-green" onClick={handleGoogleLogin} disabled={loading}>
+              CRÉER UN COMPTE
+            </button>
+          </div>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
-
-        <div className="auth-actions">
-          <button 
-            onClick={handleGoogleLogin} 
-            disabled={loading}
-            className={`btn-google ${loading ? 'loading' : ''}`}
-          >
-            {loading ? (
-              <span className="spinner"></span>
-            ) : (
-              <>
-                <GoogleIcon />
-                <span>Continuer avec Google</span>
-              </>
-            )}
-          </button>
-        </div>
-        
-        <div className="auth-footer">
-          En vous connectant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et notre <a href="#">Politique de confidentialité</a>.
-        </div>
       </div>
     </div>
   );
