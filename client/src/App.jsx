@@ -84,7 +84,7 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/me`);
+      const res = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
@@ -98,7 +98,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST' });
+      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
       setUser(null);
       showToast('Déconnecté avec succès', 'success');
     } catch (err) {

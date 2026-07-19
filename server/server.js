@@ -84,7 +84,7 @@ app.post('/api/auth/session', async (req, res) => {
 
     // Create session cookie
     const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
-    res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+    res.cookie('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true, sameSite: 'None' });
     res.json({ status: 'success' });
   } catch (error) {
     console.error("Auth Session Error:", error);

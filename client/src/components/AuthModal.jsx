@@ -20,7 +20,8 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       const res = await fetch(`${API_URL}/api/auth/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken })
+        body: JSON.stringify({ idToken }),
+        credentials: 'include'
       });
       if (res.ok) {
         onLoginSuccess();
