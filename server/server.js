@@ -11,13 +11,17 @@ let firebaseInitError = null;
 
 try {
   let serviceAccount;
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
-    const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
+  const envKeys = Object.keys(process.env);
+  const base64Key = envKeys.find(k => k.includes('FIREBASE_SERVICE_ACCOUNT') && k.includes('BASE'));
+  const rawKey = envKeys.find(k => k.includes('FIREBASE_SERVICE_ACCOUNT') && !k.includes('BASE'));
+
+  if (base64Key && process.env[base64Key]) {
+    const decoded = Buffer.from(process.env[base64Key], 'base64').toString('utf-8');
     serviceAccount = JSON.parse(decoded);
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string' 
-      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
-      : process.env.FIREBASE_SERVICE_ACCOUNT;
+  } else if (rawKey && process.env[rawKey]) {
+    serviceAccount = typeof process.env[rawKey] === 'string' 
+      ? JSON.parse(process.env[rawKey]) 
+      : process.env[rawKey];
   } else {
     try {
       serviceAccount = require('./serviceAccountKey.json');
