@@ -2,13 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBXY1R_phRgCUsYMW8AJDh8DbTf485N3gk",
-  authDomain: "agriponti-auth.firebaseapp.com",
-  projectId: "agriponti-auth",
-  storageBucket: "agriponti-auth.firebasestorage.app",
-  messagingSenderId: "479608377458",
-  appId: "1:479608377458:web:c064d35ebde1f957c872eb",
-  measurementId: "G-279TB06JNW"
+  apiKey: "AIzaSyBVOvbEhhBPxjHq4nycS8O4VT6xWELgWYo",
+  authDomain: "agriponti-app.firebaseapp.com",
+  projectId: "agriponti-app",
+  storageBucket: "agriponti-app.firebasestorage.app",
+  messagingSenderId: "1012109344066",
+  appId: "1:1012109344066:web:4a169f55e7d517f5da1cdb",
+  measurementId: "G-5B55QNJB69"
 };
 
 let app, auth, googleProvider;
