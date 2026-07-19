@@ -14,6 +14,10 @@ try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
     const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
     serviceAccount = JSON.parse(decoded);
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string' 
+      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
+      : process.env.FIREBASE_SERVICE_ACCOUNT;
   } else {
     try {
       serviceAccount = require('./serviceAccountKey.json');
