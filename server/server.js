@@ -7,6 +7,8 @@ const db = require('./db');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 
+let firebaseInitError = null;
+
 try {
   let serviceAccount;
   if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
@@ -24,7 +26,8 @@ try {
     credential: cert(serviceAccount)
   });
 } catch (err) {
-  console.warn('Firebase Admin initialization skipped or failed: ', err);
+  firebaseInitError = err;
+  console.error('Firebase Admin initialization skipped or failed: ', err);
 }
 
 const app = express();
@@ -51,6 +54,10 @@ const requireAuth = async (req, res, next) => {
 // ── Auth Routes ──────────────────────────────────────────────────
 
 app.post('/api/auth/session', async (req, res) => {
+  if (firebaseInitError) {
+    return res.status(500).json({ error: 'Firebase Init Failed', details: firebaseInitError.message || firebaseInitError.toString() });
+  }
+
   const { idToken } = req.body;
   const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
   try {
