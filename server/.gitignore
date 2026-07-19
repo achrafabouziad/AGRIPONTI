@@ -2,3 +2,5 @@ node_modules/
 wassit.db
 .env
 .DS_Store
+
+serviceAccountKey.json
