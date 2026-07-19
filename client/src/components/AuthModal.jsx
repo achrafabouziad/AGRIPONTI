@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth, googleProvider, signInWithPopup } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase';
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -13,6 +13,10 @@ const GoogleIcon = () => (
 export default function AuthModal({ onClose, onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const sendIdTokenToServer = async (idToken) => {
     try {
@@ -50,62 +54,80 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     }
   };
 
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return setError('Remplissez tous les champs.');
+    try {
+      setLoading(true);
+      setError('');
+      let result;
+      if (isRegistering) {
+        result = await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        result = await signInWithEmailAndPassword(auth, email, password);
+      }
+      const idToken = await result.user.getIdToken();
+      await sendIdTokenToServer(idToken);
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') setError('Cet email est déjà utilisé.');
+      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') setError('Email ou mot de passe incorrect.');
+      else setError(err.message || 'Erreur lors de l\'authentification.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="uno-overlay" onClick={onClose}>
       <div className="uno-modal" onClick={e => e.stopPropagation()}>
         <button className="uno-close" onClick={onClose}>✕</button>
         
         <div className="uno-columns">
-          {/* Left Column */}
+          {/* Left Column (Forms) */}
           <div className="uno-left">
-            <h2 className="uno-title">Clients enregistrés</h2>
+            <h2 className="uno-title">{isRegistering ? 'Nouveaux clients' : 'Clients enregistrés'}</h2>
             
             {error && <div className="uno-error">{error}</div>}
             
-            <button 
-              onClick={handleGoogleLogin} 
-              disabled={loading}
-              className="uno-google-btn"
-            >
-              {loading ? 'Connexion en cours...' : (
+            <button type="button" onClick={handleGoogleLogin} disabled={loading} className="uno-google-btn">
+              {loading ? 'Patientez...' : (
                 <>
-                  <div className="uno-google-icon-wrapper">
-                    <GoogleIcon />
-                  </div>
-                  <span>Se connecter avec Google</span>
+                  <div className="uno-google-icon-wrapper"><GoogleIcon /></div>
+                  <span>Continuer avec Google</span>
                 </>
               )}
             </button>
 
-            <div className="uno-form">
+            <form className="uno-form" onSubmit={handleEmailAuth}>
               <label>EMAIL <span>*</span></label>
-              <input type="email" disabled placeholder="Connexion Google uniquement" />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               
               <label>MOT DE PASSE <span>*</span></label>
-              <input type="password" disabled />
-            </div>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
 
-            <div className="uno-actions">
-              <button className="uno-btn-green" onClick={handleGoogleLogin} disabled={loading}>
-                CONNEXION
-              </button>
-              <span className="uno-forgot">MOT DE PASSE OUBLIÉ ?</span>
-            </div>
+              <div className="uno-actions">
+                <button type="submit" className="uno-btn-green" disabled={loading}>
+                  {isRegistering ? 'S\'INSCRIRE' : 'CONNEXION'}
+                </button>
+                {!isRegistering && <span className="uno-forgot">MOT DE PASSE OUBLIÉ ?</span>}
+              </div>
+            </form>
           </div>
 
-          {/* Right Column */}
+          {/* Right Column (Toggle switch) */}
           <div className="uno-right">
-            <h2 className="uno-title">Nouveaux clients</h2>
+            <h2 className="uno-title">{isRegistering ? 'Déjà client ?' : 'Nouveaux clients'}</h2>
             <p className="uno-desc">
-              La création d'un compte a de nombreux avantages : consultation rapide, sauvegarder 
-              plusieurs adresses, suivre les commandes, et bien plus encore.
+              {isRegistering 
+                ? "Si vous avez déjà un compte, connectez-vous pour retrouver vos préférences et annonces."
+                : "La création d'un compte a de nombreux avantages : consultation rapide, sauvegarder vos alertes, publier des annonces et bien plus."
+              }
             </p>
-            <button className="uno-btn-green" onClick={handleGoogleLogin} disabled={loading}>
-              CRÉER UN COMPTE
+            <button className="uno-btn-green" onClick={() => { setIsRegistering(!isRegistering); setError(''); }} disabled={loading}>
+              {isRegistering ? 'SE CONNECTER' : 'CRÉER UN COMPTE'}
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
