@@ -51,22 +51,43 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-        <button className="modal-close" onClick={onClose}>✕</button>
+    <div className="modal-overlay auth-overlay" onClick={onClose}>
+      <div className="modal-content auth-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close auth-close" onClick={onClose}>✕</button>
         
-        <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Connexion Sécurisée</h2>
+        <div className="auth-header">
+          <div className="auth-logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <h2 className="auth-title">Bienvenue</h2>
+          <p className="auth-subtitle">Connectez-vous pour accéder aux prix de gros et contacter les producteurs.</p>
+        </div>
 
-        {error && <div style={{ color: 'red', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
+        {error && <div className="auth-error">{error}</div>}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="auth-actions">
           <button 
             onClick={handleGoogleLogin} 
             disabled={loading}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '14px', background: 'white', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', width: '100%' }}
+            className={`btn-google ${loading ? 'loading' : ''}`}
           >
-            {loading ? 'Connexion en cours...' : <><GoogleIcon /> Continuer avec Google</>}
+            {loading ? (
+              <span className="spinner"></span>
+            ) : (
+              <>
+                <GoogleIcon />
+                <span>Continuer avec Google</span>
+              </>
+            )}
           </button>
+        </div>
+        
+        <div className="auth-footer">
+          En vous connectant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et notre <a href="#">Politique de confidentialité</a>.
         </div>
       </div>
     </div>
