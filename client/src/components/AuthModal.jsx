@@ -70,7 +70,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       await sendIdTokenToServer(idToken);
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setError('Cet email est déjà utilisé.');
-      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') setError('Email ou mot de passe incorrect.');
+      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') setError('Email ou mot de passe incorrect.');
       else setError(err.message || 'Erreur lors de l\'authentification.');
     } finally {
       setLoading(false);
