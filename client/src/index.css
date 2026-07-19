@@ -1647,3 +1647,70 @@ body::before {
     padding: 30px 20px;
   }
 }
+
+/* ── Premium Modern Design Update ── */
+body[data-theme="light"] {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(140, 100%, 74%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(210, 100%, 56%, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(160, 100%, 93%, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+body[data-theme="dark"] {
+  background-color: #0f172a;
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(140, 100%, 74%, 0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(210, 100%, 56%, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(160, 100%, 93%, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-title, .section-title, .hero-title, .hero-subtitle, .stat-value, .stat-label, .price-card h3, .shop-card h3, .b2b-price {
+  font-family: "Outfit", sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+body, p, span, div, button, a, input, label {
+  font-family: "Inter", sans-serif;
+}
+
+.hero-title {
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--emerald-600) 0%, var(--emerald-400) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body[data-theme="dark"] .hero-title {
+  background: linear-gradient(135deg, var(--emerald-400) 0%, var(--emerald-200) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.price-card, .shop-card {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+body[data-theme="dark"] .price-card, body[data-theme="dark"] .shop-card {
+  background-color: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body[data-theme="dark"] .navbar {
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
