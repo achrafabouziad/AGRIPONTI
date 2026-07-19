@@ -20,7 +20,8 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
 
   const sendIdTokenToServer = async (idToken) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/session`, {
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://agriponti.onrender.com' : 'http://localhost:3001');
+      const res = await fetch(`${API_URL}/api/auth/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken })
