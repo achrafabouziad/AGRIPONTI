@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, googleProvider, RecaptchaVerifier, signInWithPopup, signInWithPhoneNumber } from '../firebase';
 
 const GoogleIcon = () => (
